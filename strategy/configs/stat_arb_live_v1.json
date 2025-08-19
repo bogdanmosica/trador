@@ -1,0 +1,66 @@
+{
+  "strategy": {
+    "name": "stat_arb_live",
+    "class": "StatisticalArbitrageStrategy",
+    "version": "v1",
+    "description": "Live trading statistical arbitrage with production safeguards"
+  },
+  "parameters": {
+    "lookback_window": 55,
+    "zscore_entry_threshold": 2.2,
+    "zscore_exit_threshold": 0.4,
+    "volatility_lookback": 22,
+    "half_life_periods": 11,
+    "regime_lookback": 110,
+    "volatility_threshold": 0.78,
+    "trend_threshold": 0.28,
+    "min_confidence": 0.65,
+    "volume_filter": true,
+    "rsi_oversold": 28,
+    "rsi_overbought": 72
+  },
+  "schedule": {
+    "enabled": true,
+    "trading_hours": {
+      "start": "09:45",
+      "end": "15:15"
+    },
+    "trading_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    "blackout_periods": [
+      {
+        "name": "FOMC_days",
+        "description": "Federal Reserve meeting days",
+        "enabled": true
+      },
+      {
+        "name": "earnings_season",
+        "description": "Major earnings announcement periods",
+        "enabled": true
+      },
+      {
+        "name": "options_expiry",
+        "description": "Monthly options expiration Fridays",
+        "enabled": true
+      }
+    ]
+  },
+  "live_trading": {
+    "warm_up_periods": 200,
+    "max_signals_per_hour": 2,
+    "circuit_breaker_enabled": true,
+    "pre_market_analysis": true
+  },
+  "metadata": {
+    "risk_profile": "low-medium",
+    "expected_sharpe": 1.4,
+    "max_drawdown_target": 6.0,
+    "avg_holding_period_hours": 20,
+    "suitable_for": ["live_trading", "production", "automated"]
+  },
+  "monitoring": {
+    "daily_pnl_alerts": true,
+    "drawdown_alerts": true,
+    "signal_quality_tracking": true,
+    "regime_change_notifications": true
+  }
+}

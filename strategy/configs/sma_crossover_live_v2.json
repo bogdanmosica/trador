@@ -1,0 +1,26 @@
+{
+  "strategy": {
+    "name": "sma_crossover_live_v2",
+    "class": "SmaCrossoverStrategy",
+    "description": "Live-tested SMA crossover for medium volatility"
+  },
+  "parameters": {
+    "fast_period": 9,
+    "slow_period": 21,
+    "symbol": "BTCUSDT",
+    "timeframe": "1h",
+    "min_confidence": 0.7,
+    "position_size": 0.5
+  },
+  "metadata": {
+    "risk_profile": "medium",
+    "expected_sharpe": 0.9,
+    "max_drawdown_target": 8.0,
+    "avg_holding_period_hours": 12,
+    "suitable_for": ["live_trading", "medium_risk"],
+    "status": "live",
+    "created_at": "2025-08-15T10:30:00",
+    "notes": "Live-tested on BTC, medium volatility regime",
+    "version": "v2"
+  }
+}

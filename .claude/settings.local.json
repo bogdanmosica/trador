@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python test:*)",
+      "Bash(move test_strategy_module.py strategytest_strategy_module.py)",
+      "Bash(del test_strategy_module.py)",
+      "Bash(rm:*)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm add -D @tanstack/router-vite-plugin)",
+      "Bash(pnpm add -D @vitejs/plugin-react)",
+      "Bash(python:*)",
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(npm run build:*)",
+      "Bash(pip install:*)",
+      "Bash(find:*)",
+      "Bash(C:Python313python.exe -m pip install numpy pandas scipy pyyaml)",
+      "Bash(pip --version)",
+      "Bash(pnpm build:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "D:\\d D:\\Projects"
+    ]
+  }
+}

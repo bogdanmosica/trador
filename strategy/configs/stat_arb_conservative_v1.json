@@ -1,0 +1,37 @@
+{
+  "strategy": {
+    "name": "stat_arb_conservative",
+    "class": "StatisticalArbitrageStrategy",
+    "version": "v1",
+    "description": "Conservative statistical arbitrage with higher Z-score thresholds"
+  },
+  "parameters": {
+    "lookback_window": 60,
+    "zscore_entry_threshold": 2.5,
+    "zscore_exit_threshold": 0.3,
+    "volatility_lookback": 25,
+    "half_life_periods": 12,
+    "regime_lookback": 120,
+    "volatility_threshold": 0.8,
+    "trend_threshold": 0.25,
+    "min_confidence": 0.75,
+    "volume_filter": true,
+    "rsi_oversold": 25,
+    "rsi_overbought": 75
+  },
+  "schedule": {
+    "enabled": true,
+    "trading_hours": {
+      "start": "09:45",
+      "end": "15:30"
+    },
+    "trading_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  "metadata": {
+    "risk_profile": "low",
+    "expected_sharpe": 1.5,
+    "max_drawdown_target": 5.0,
+    "avg_holding_period_hours": 24,
+    "suitable_for": ["small_accounts", "risk_averse", "backtesting"]
+  }
+}

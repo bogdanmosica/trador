@@ -1,0 +1,26 @@
+{
+  "strategy": {
+    "name": "sma_crossover_conservative_v1",
+    "class": "SmaCrossoverStrategy",
+    "description": "Conservative SMA crossover with stable signals"
+  },
+  "parameters": {
+    "fast_period": 20,
+    "slow_period": 50,
+    "symbol": "BTCUSDT",
+    "timeframe": "4h",
+    "min_confidence": 0.8,
+    "position_size": 0.3
+  },
+  "metadata": {
+    "risk_profile": "low",
+    "expected_sharpe": 1.1,
+    "max_drawdown_target": 5.0,
+    "avg_holding_period_hours": 48,
+    "suitable_for": ["conservative_trading", "long_term"],
+    "status": "draft",
+    "created_at": "2025-08-15T11:45:00",
+    "notes": "Conservative approach for lower risk tolerance",
+    "version": "v1"
+  }
+}

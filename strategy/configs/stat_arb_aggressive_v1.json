@@ -1,0 +1,37 @@
+{
+  "strategy": {
+    "name": "stat_arb_aggressive",
+    "class": "StatisticalArbitrageStrategy",
+    "version": "v1",
+    "description": "Aggressive statistical arbitrage with lower Z-score thresholds"
+  },
+  "parameters": {
+    "lookback_window": 40,
+    "zscore_entry_threshold": 1.5,
+    "zscore_exit_threshold": 0.7,
+    "volatility_lookback": 15,
+    "half_life_periods": 8,
+    "regime_lookback": 80,
+    "volatility_threshold": 0.7,
+    "trend_threshold": 0.35,
+    "min_confidence": 0.5,
+    "volume_filter": true,
+    "rsi_oversold": 35,
+    "rsi_overbought": 65
+  },
+  "schedule": {
+    "enabled": true,
+    "trading_hours": {
+      "start": "09:30",
+      "end": "16:00"
+    },
+    "trading_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  "metadata": {
+    "risk_profile": "high",
+    "expected_sharpe": 0.8,
+    "max_drawdown_target": 15.0,
+    "avg_holding_period_hours": 8,
+    "suitable_for": ["large_accounts", "risk_tolerant", "high_frequency"]
+  }
+}

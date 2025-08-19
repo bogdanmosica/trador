@@ -1,0 +1,37 @@
+{
+  "strategy": {
+    "name": "stat_arb_balanced",
+    "class": "StatisticalArbitrageStrategy",
+    "version": "v1",
+    "description": "Balanced statistical arbitrage with moderate risk/reward profile"
+  },
+  "parameters": {
+    "lookback_window": 50,
+    "zscore_entry_threshold": 2.0,
+    "zscore_exit_threshold": 0.5,
+    "volatility_lookback": 20,
+    "half_life_periods": 10,
+    "regime_lookback": 100,
+    "volatility_threshold": 0.75,
+    "trend_threshold": 0.30,
+    "min_confidence": 0.6,
+    "volume_filter": true,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70
+  },
+  "schedule": {
+    "enabled": true,
+    "trading_hours": {
+      "start": "09:35",
+      "end": "15:45"
+    },
+    "trading_days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+  },
+  "metadata": {
+    "risk_profile": "medium",
+    "expected_sharpe": 1.2,
+    "max_drawdown_target": 8.0,
+    "avg_holding_period_hours": 16,
+    "suitable_for": ["general_use", "balanced_risk", "institutional"]
+  }
+}
