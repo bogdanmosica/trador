@@ -1,34 +1,33 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- Source lives in `src/` (libraries, domain modules) and entry points under `bin/` or `apps/` if present. Tests are in `tests/` mirroring `src/` paths. Shared scripts go in `scripts/`. Static assets in `assets/` or `public/`. Config and samples in `config/` and `.env.example`.
-- Prefer small, focused modules. Group by domain (e.g., `src/orders/`, `src/core/`) with an `index`/`__init__` that exposes public APIs.
+- Backend: `server/` (FastAPI). Entry: `server/main.py`; routers in `server/api/routes/`; schemas in `server/api/schemas/`; services in `server/services/` via a factory (simple → integrated → mock).
+- Frontend: `ui/` (React + Vite + Tailwind + TS). Built assets in `ui/dist/` served by the backend.
+- Bot modules: `bot_runner/`, `strategy/`, `market_data/`, `execution_engine/`, `portfolio_risk/`, `backtest/` with their own READMEs.
+- Scripts: `start_server.py` (serve UI + API), `run_bots.py` (demo runners), `run_tests.py` (strategy tests). Tests for API in `server/tests/`.
 
 ## Build, Test, and Development Commands
-- Install: use the project’s tool if present
-  - Node: `npm ci` or `pnpm i`
-  - Python: `poetry install` or `pip install -r requirements.txt`
-  - Rust: `cargo build`
-- Run locally: check `Makefile` or `package.json` scripts; common: `make dev`, `npm run dev`, or `python -m <module>`.
-- Tests: `npm test`, `pytest -q`, or `cargo test` depending on stack.
-- Lint/format: `npm run lint && npm run format`, `ruff check --fix && black .`, or `cargo fmt && cargo clippy -D warnings`.
+- Backend deps: `pip install -r requirements.txt`
+- Frontend build: `cd ui && pnpm install && pnpm run build`
+- All-in-one server: `python start_server.py` → http://localhost:8000
+- Dev mode: backend `python -m uvicorn server.main:app --reload --port 8000`; frontend `cd ui && pnpm run dev`
+- Server tests (if pytest installed): `pytest -q server/tests`
+- Strategy tests: `python run_tests.py`
 
 ## Coding Style & Naming Conventions
-- Indentation: 2 spaces (JS/TS), 4 spaces (Python).
-- Names: `camelCase` variables/functions, `PascalCase` classes/types, `snake_case` files (Python) or `kebab-case` (JS/TS CLI/util files).
-- Keep modules <300 lines; prefer pure functions and clear boundaries.
-- Run formatters before committing (Prettier/ESLint, Black/Ruff, rustfmt/clippy as applicable).
+- Python: PEP 8, 4-space indent, type hints, PEP 257 docstrings. Follow CLAUDE.md: top-of-file comments and clear function docs.
+- TypeScript/React: keep components small; use Prettier/ESLint (see `ui` configs). Use `PascalCase` for components, `camelCase` for vars.
+- Modules organized by domain (e.g., `server/services/*`, `strategy/strategies/*`).
 
 ## Testing Guidelines
-- Place unit tests in `tests/` mirroring source paths (`tests/orders/test_service.*`, `src/orders/service.*`).
-- Use descriptive, behavior-focused names: `should_do_x_when_y` (JS) or `test_does_x_when_y` (Python).
-- Aim for meaningful coverage on core logic; run with `--coverage`/`--cov` if configured.
+- API tests: `server/tests/` use `httpx.AsyncClient`. Validate JSON shapes (bots list, metrics, root message).
+- Frontend: use manual dev verification against local API (`VITE_API_BASE_URL` if needed).
+- Coverage optional; prioritize core endpoints and service paths.
 
 ## Commit & Pull Request Guidelines
-- Commits: imperative mood; prefer Conventional Commits when possible: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
-- Branches: `feat/<scope>`, `fix/<scope>`, `chore/<scope>`.
-- PRs: concise title, problem/solution summary, linked issues (`Closes #123`), screenshots or logs when UI/behavior changes. Ensure CI green and lint/format run locally.
+- Commits: Conventional Commit style (`feat:`, `fix:`, `chore:`, `docs:`, `test:`) in imperative mood.
+- PRs: include problem/solution summary, steps to verify (commands/URLs), and link issues (`Closes #123`). Attach screenshots/logs for UI/API changes.
 
-## Security & Configuration
-- Do not commit secrets. Use `.env` (gitignored) and keep `.env.example` up to date.
-- Validate inputs at module boundaries; handle errors explicitly; avoid broad catches and silent failures.
+## Security & Configuration Tips
+- Do not commit secrets. Backend env via `.env` (gitignored); frontend uses `.env.local` and `VITE_API_BASE_URL`.
+- CORS is enabled for local dev (see `server/main.py`). Validate inputs at API boundaries; avoid broad exception handling in services.

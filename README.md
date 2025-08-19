@@ -15,7 +15,7 @@ A comprehensive trading bot management system with a modern web interface and Fa
    ```bash
    cd ui
    pnpm install
-   pnpm run build
+   pnpm build
    cd ..
    ```
 

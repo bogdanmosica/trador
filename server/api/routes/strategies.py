@@ -406,7 +406,7 @@ async def get_strategy_schema(strategy_name: str):
 
 @router.get("/configurations", response_model=List[StrategyConfig])
 async def get_configurations(
-    strategy_class: Optional[str] = Query(None, description="Filter by strategy class")
+    strategy_class: Optional[str] = Query(None, description="Filter by strategy class (e.g., SmaCrossoverStrategy, sma_crossover)")
 ):
     """
     Get all available strategy configurations.
@@ -418,10 +418,21 @@ async def get_configurations(
     configurations = discovery_response.configurations
     
     if strategy_class:
-        configurations = [
-            config for config in configurations
-            if config.strategy_class == strategy_class
-        ]
+        def norm(s: str) -> str:
+            import re
+            return re.sub(r"[^a-z0-9]", "", s.lower()) if s else ""
+
+        target = norm(strategy_class)
+        # Accept multiple forms: full class, without 'strategy', snake-case names
+        def matches(cfg: StrategyConfig) -> bool:
+            cls = cfg.strategy_class or ""
+            n_cls = norm(cls)
+            n_cls_trim = n_cls.replace("strategy", "")
+            n_name = norm(cfg.name)
+            return target in {n_cls, n_cls_trim, n_name}
+
+        filtered = [cfg for cfg in configurations if matches(cfg)]
+        configurations = filtered
     
     return configurations
 

@@ -254,33 +254,39 @@ class SmaCrossoverStrategy(BaseStrategy):
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 50,
+                "default": self.parameters.get("fast_period", 9),
                 "description": "Period for fast moving average"
             },
             "slow_period": {
                 "type": "integer", 
                 "minimum": 2,
                 "maximum": 200,
+                "default": self.parameters.get("slow_period", 21),
                 "description": "Period for slow moving average"
             },
             "symbol": {
                 "type": "string",
+                "default": self.parameters.get("symbol", "BTCUSDT"),
                 "description": "Trading symbol (e.g., BTCUSDT)"
             },
             "timeframe": {
                 "type": "string",
                 "enum": ["1m", "5m", "15m", "1h", "4h", "1d"],
+                "default": self.parameters.get("timeframe", "1h"),
                 "description": "Timeframe for analysis"
             },
             "min_confidence": {
                 "type": "number",
                 "minimum": 0.0,
                 "maximum": 1.0,
+                "default": self.parameters.get("min_confidence", 0.7),
                 "description": "Minimum confidence threshold for signals"
             },
             "position_size": {
                 "type": "number",
                 "minimum": 0.01,
                 "maximum": 1.0,
+                "default": self.parameters.get("position_size", 0.5),
                 "description": "Fraction of capital to use for positions"
             }
         }

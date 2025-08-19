@@ -7,7 +7,8 @@ import {
   useAvailableSymbols,
   useCreateBot,
   useUpdateBotConfig,
-  useBotConfig
+  useBotConfig,
+  useRescanStrategies,
 } from '@/hooks/useBots';
 import { StrategyInfo, StrategyConfig } from '@/types/strategies';
 
@@ -39,6 +40,7 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
   const { data: botConfig, isLoading: botConfigLoading } = useBotConfig(botId || '', mode === 'edit');
   const createBotMutation = useCreateBot();
   const updateBotMutation = useUpdateBotConfig();
+  const rescanMutation = useRescanStrategies();
   
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -53,24 +55,19 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
   
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyInfo | null>(null);
-  const [availableConfigs, setAvailableConfigs] = useState<StrategyConfig[]>([]);
+  // Configurations for the selected strategy
+  const { data: configurations } = useConfigurations(formData.strategy);
   
-  // Load all configurations and strategy details
-  const { data: configurations } = useConfigurations(); // Get all configurations
   const { data: strategyDetails } = useStrategyDetails(formData.strategy, !!formData.strategy);
   
-  // Update available configurations when strategy changes - filter by selected strategy
-  useEffect(() => {
-    if (configurations && formData.strategy) {
-      // Filter configurations that match the selected strategy
-      const filteredConfigs = configurations.filter(config => 
-        config.strategy_class === formData.strategy
-      );
-      setAvailableConfigs(filteredConfigs);
-    } else {
-      setAvailableConfigs([]);
+  const availableConfigs: StrategyConfig[] = useMemo(() => {
+    if (configurations && configurations.length > 0) return configurations;
+    const all = strategiesData?.configurations || [];
+    if (formData.strategy) {
+      return all.filter(c => c.strategy_class === formData.strategy);
     }
-  }, [configurations, formData.strategy]);
+    return [];
+  }, [configurations, strategiesData, formData.strategy]);
   
   // Update selected strategy details
   useEffect(() => {
@@ -78,6 +75,25 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
       setSelectedStrategy(strategyDetails);
     }
   }, [strategyDetails]);
+
+  // When strategy changes (and details load), prefill defaults for create mode
+  useEffect(() => {
+    if (mode === 'create' && selectedStrategy?.parameter_schema) {
+      const defaults: Record<string, any> = Object.fromEntries(
+        Object.entries(selectedStrategy.parameter_schema).map(([k, schema]: any) => [
+          k,
+          schema?.default !== undefined ? schema.default : ''
+        ])
+      );
+      const symbolDefault = (selectedStrategy.parameter_schema as any)?.symbol?.default;
+      setFormData(prev => ({ 
+        ...prev, 
+        parameters: defaults, 
+        configuration: '',
+        symbol: symbolDefault ?? prev.symbol
+      }));
+    }
+  }, [selectedStrategy, mode]);
   
   // Initialize form data for edit mode
   useEffect(() => {
@@ -166,8 +182,23 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
       setFormData(prev => ({
         ...prev,
         configuration: configName,
-        parameters: { ...config.parameters }
+        parameters: { ...config.parameters },
+        // Apply symbol from preset if present
+        symbol: (config.parameters as any)?.symbol ?? prev.symbol,
       }));
+    } else {
+      // Reset to strategy defaults when clearing selection
+      if (selectedStrategy?.parameter_schema) {
+        const defaults: Record<string, any> = Object.fromEntries(
+          Object.entries(selectedStrategy.parameter_schema).map(([k, schema]: any) => [
+            k,
+            schema?.default !== undefined ? schema.default : ''
+          ])
+        );
+        setFormData(prev => ({ ...prev, configuration: '', parameters: defaults }));
+      } else {
+        setFormData(prev => ({ ...prev, configuration: '', parameters: {} }));
+      }
     }
   };
   
@@ -408,9 +439,20 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
               
               {/* Strategy */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Strategy *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Strategy *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => rescanMutation.mutate()}
+                    className="text-xs px-2 py-1 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                    disabled={rescanMutation.isPending}
+                    title="Rescan strategies and presets"
+                  >
+                    {rescanMutation.isPending ? 'Rescanning…' : 'Rescan'}
+                  </button>
+                </div>
                 <select
                   value={formData.strategy}
                   onChange={(e) => handleFieldChange('strategy', e.target.value)}
@@ -431,24 +473,83 @@ const BotModal: React.FC<BotModalProps> = ({ isOpen, onClose, mode, botId }) => 
                 {errors.strategy && <p className="text-red-500 text-xs mt-1">{errors.strategy}</p>}
               </div>
               
-              {/* Configuration Preset */}
-              {availableConfigs.length > 0 && (
+              {/* Category (Configuration Preset) */}
+              {formData.strategy && availableConfigs.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Configuration Preset (Optional)
+                    Category
                   </label>
                   <select
                     value={formData.configuration}
                     onChange={(e) => handleConfigurationChange(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Custom configuration</option>
-                    {availableConfigs.map((config) => (
-                      <option key={config.name} value={config.name}>
-                        {config.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} ({config.metadata?.risk_profile || 'Unknown'} risk)
-                      </option>
-                    ))}
+                    <option value="">Use strategy defaults...</option>
+                    {(() => {
+                      const grouped: Record<string, StrategyConfig[]> = {};
+                      availableConfigs.forEach(cfg => {
+                        const key = (cfg.metadata?.risk_profile || 'other').toString().toLowerCase();
+                        if (!grouped[key]) grouped[key] = [];
+                        grouped[key].push(cfg);
+                      });
+                      const order = ['low', 'balanced', 'medium', 'high', 'aggressive', 'other'];
+                      const keys = Object.keys(grouped).sort((a, b) => {
+                        const ia = order.indexOf(a);
+                        const ib = order.indexOf(b);
+                        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                      });
+                      const labelFor = (k: string) => {
+                        const map: Record<string, string> = {
+                          low: 'Low (Conservative)',
+                          balanced: 'Balanced',
+                          medium: 'Medium',
+                          high: 'High (Aggressive)',
+                          aggressive: 'Aggressive',
+                          other: 'Other',
+                        };
+                        return map[k] || (k.charAt(0).toUpperCase() + k.slice(1));
+                      };
+                      return keys.map(k => (
+                        <optgroup key={k} label={labelFor(k)}>
+                          {grouped[k]
+                            .slice()
+                            .sort((a, b) => {
+                              const va = (a.metadata?.version || '').toString();
+                              const vb = (b.metadata?.version || '').toString();
+                              const na = parseInt(va.replace(/\D/g, '')) || 0;
+                              const nb = parseInt(vb.replace(/\D/g, '')) || 0;
+                              if (na !== nb) return nb - na; // newest first
+                              return a.name.localeCompare(b.name);
+                            })
+                            .map(config => (
+                            <option key={config.name} value={config.name}>
+                              {config.name}
+                              {config.metadata?.version ? ` (${config.metadata.version})` : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ));
+                    })()}
                   </select>
+                  {/* Selected preset details */}
+                  {formData.configuration && (() => {
+                    const sel = availableConfigs.find(c => c.name === formData.configuration);
+                    if (!sel) return null;
+                    return (
+                      <div className="mt-2 text-xs text-gray-600">
+                        <div className="flex items-center justify-between">
+                          <span>
+                            {sel.metadata?.description || 'Preset selected'}
+                          </span>
+                          {sel.metadata?.risk_profile && (
+                            <span className="ml-2 inline-block px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-gray-700">
+                              {String(sel.metadata.risk_profile).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               

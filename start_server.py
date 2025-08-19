@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
 Startup script for the Trading Bot API server.
-This script starts the FastAPI server that serves both the API and the frontend.
+
+Notes on startup paths:
+- In production/dev-all-in-one, this builds the UI (if missing) and runs
+  `uvicorn server.main:app` on port 8000.
+- The FastAPI app (see `server/main.py`) serves the SPA from `ui/dist` at `/`
+  and exposes REST endpoints under `/api/*` with docs at `/docs`.
 """
 import uvicorn
 import os

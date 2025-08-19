@@ -1,4 +1,11 @@
-# This is the main entry point for the FastAPI application.
+"""
+Main FastAPI application.
+
+Startup path overview:
+- Serves built React UI from `ui/dist` at `/` (if present) and `/assets`.
+- Exposes API routes under `/api/*` (bots, metrics, strategies).
+- SPA catch-all returns `index.html` for non-API/docs paths.
+"""
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
